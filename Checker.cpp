@@ -40,22 +40,20 @@ BatteryStatus checkChargeRate(float chargeRate) {
     return {true, ""};
 }
 
-//Function to check if the battery is Ok (checks for temperature, SOC and charge rate)
-bool batteryIsOk(float temperature, float soc, float chargeRate) {
-    BatteryStatus checks[] = {
-        checkTemperature(temperature),
-        checkSoc(soc),
-        checkChargeRate(chargeRate)
-    };
-
-    for (const auto& status : checks) {
-        if (!status.All_Ok) {
-            cout << status.Warning_message;
-            return false;
-        }
+// Helper function to check and report the battery status
+bool checkAndReport(const BatteryStatus& status) {
+    if (!status.All_Ok) {
+        cout << status.Warning_message;
+        return false;
     }
-
     return true;
+}
+
+// Checks the battery status for temperature, SOC, and charge rate.
+bool batteryIsOk(float temperature, float soc, float chargeRate) {
+    return checkAndReport(checkTemperature(temperature)) &&
+           checkAndReport(checkSoC(soc)) &&
+           checkAndReport(checkChargeRate(chargeRate));
 }
 
 // Test cases
