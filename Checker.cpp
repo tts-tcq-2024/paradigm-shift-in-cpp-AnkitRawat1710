@@ -2,58 +2,60 @@
 #include <assert.h>
 using namespace std;
 
-// Structure hold the status of battery (checks with an OK flag and a warning message)
+// Structure to hold battery status with warnings
 struct BatteryStatus {
     bool All_Ok;
     string Warning_message;
 };
 
-// To Checks if the temperature is within the safe range (0°C to 45°C)
+// Threshold structure for battery limits
+struct BatteryThresholds {
+    float lower_limit;
+    float upper_limit;
+    float warning_tolerance;
+};
+
+// Generic function to check parameters and generate warnings
+BatteryStatus checkParameter(float value, const BatteryThresholds& thresholds, string low_warning, string high_warning) {
+    float warning_low = thresholds.lower_limit + thresholds.warning_tolerance;
+    float warning_high = thresholds.upper_limit - thresholds.warning_tolerance;
+
+    if (value < thresholds.lower_limit) {
+        return {false, low_warning + " is low\n"};
+    } else if (value > thresholds.upper_limit) {
+        return {false, high_warning + " is high\n"};
+    } else if (value <= warning_low) {
+        return {true, "Warning: Approaching " + low_warning + "\n"};
+    } else if (value >= warning_high) {
+        return {true, "Warning: Approaching " + high_warning + "\n"};
+    }
+    return {true, ""};
+}
+
+// Battery limit configurations
+BatteryThresholds tempThresholds = {0, 45, 2.25};  // 5% of 45 is 2.25
+BatteryThresholds socThresholds = {20, 80, 4};     // 5% of 80 is 4
+BatteryThresholds chargeRateThresholds = {0, 0.8, 0.04};  // 5% of 0.8 is 0.04
+
 BatteryStatus checkTemperature(float temperature) {
-    if (temperature < 0) {
-        return {false, "Warning: Temperature is low\n"};
-        
-    }
-    else if (temperature > 45) {
-        return {false, "Warning: Temperature is high\n"};
-        
-    }
-    return {true, ""};
+    return checkParameter(temperature, tempThresholds, "Temperature", "Temperature");
 }
 
-// To check if the State of Charge (SOC) is within the safe range (20% to 80%)
 BatteryStatus checkSoC(float soc) {
-    if (soc < 20) {
-        return {false, "Warning: State of Charge is low\n"};
-    } 
-    else if (soc > 80) {
-        return {false, "Warning: State of Charge is high\n"};
-    }
-    return {true, ""};
+    return checkParameter(soc, socThresholds, "State of Charge", "State of Charge");
 }
 
-// To check if the charge rate is within the safe limit (0 to 0.8C)
 BatteryStatus checkChargeRate(float chargeRate) {
-    if (chargeRate > 0.8) {
-        return {false, "Warning: Charge Rate is high\n"};
-    }
-    return {true, ""};
+    return checkParameter(chargeRate, chargeRateThresholds, "Charge Rate", "Charge Rate");
 }
 
-// Helper function to check and report the battery status
+// Check and report battery status
 bool checkAndReport(const BatteryStatus& status) {
-    if (!status.All_Ok) {
+    if (!status.All_Ok || !status.Warning_message.empty()) {
         cout << status.Warning_message;
-        return false;
+        return status.All_Ok;
     }
     return true;
-}
-
-// Checks the battery status for temperature, SOC, and charge rate.
-bool batteryIsOk(float temperature, float soc, float chargeRate) {
-    return checkAndReport(checkTemperature(temperature)) &&
-           checkAndReport(checkSoC(soc)) &&
-           checkAndReport(checkChargeRate(chargeRate));
 }
 
 // Test cases
@@ -66,10 +68,10 @@ void runTestCases() {
     assert(batteryIsOk(25, 70, 1.1) == false);  // High charge rate
 }
 
-// Main function
 int main() {
     runTestCases();
     cout << "\nAll the test cases have passed\n";
 }
+
 
 
