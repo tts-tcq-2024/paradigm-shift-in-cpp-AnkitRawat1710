@@ -18,9 +18,20 @@ string generateWarningMessage(const string& parameter, const string& limitType) 
     return "Warning: " + parameter + " is " + limitType + "\n";
 }
 
-// Function to check if a value is in a specific range
+// Helper function to check if a value is in a specific range
 bool isInRange(float value, float lowerLimit, float upperLimit) {
     return value >= lowerLimit && value <= upperLimit;
+}
+
+// Helper function to check for early warning based on tolerance
+BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit, float tolerance, const string& parameter) {
+    if (isInRange(value, lowerLimit, lowerLimit + tolerance)) {
+        return {true, generateWarningMessage(parameter, "approaching low limit")};
+    }
+    if (isInRange(value, upperLimit - tolerance, upperLimit)) {
+        return {true, generateWarningMessage(parameter, "approaching high limit")};
+    }
+    return {true, ""};
 }
 
 // Function to check temperature and issue warnings
@@ -31,13 +42,7 @@ BatteryStatus checkTemperature(float temperature) {
     if (temperature > 45) {
         return {false, generateWarningMessage("Temperature", "high")};
     }
-    if (isInRange(temperature, 0, 0 + temperatureWarningTolerance)) {
-        return {true, generateWarningMessage("Temperature", "approaching low limit")};
-    }
-    if (isInRange(temperature, 45 - temperatureWarningTolerance, 45)) {
-        return {true, generateWarningMessage("Temperature", "approaching high limit")};
-    }
-    return {true, ""};
+    return checkEarlyWarning(temperature, 0, 45, temperatureWarningTolerance, "Temperature");
 }
 
 // Function to check State of Charge (SoC) and issue warnings
@@ -48,13 +53,7 @@ BatteryStatus checkSoC(float soc) {
     if (soc > 80) {
         return {false, generateWarningMessage("State of Charge", "high")};
     }
-    if (isInRange(soc, 20, 20 + socWarningTolerance)) {
-        return {true, generateWarningMessage("State of Charge", "approaching discharge limit")};
-    }
-    if (isInRange(soc, 80 - socWarningTolerance, 80)) {
-        return {true, generateWarningMessage("State of Charge", "approaching charge-peak")};
-    }
-    return {true, ""};
+    return checkEarlyWarning(soc, 20, 80, socWarningTolerance, "State of Charge");
 }
 
 // Function to check charge rate and issue warnings
@@ -62,10 +61,7 @@ BatteryStatus checkChargeRate(float chargeRate) {
     if (chargeRate > 0.8) {
         return {false, generateWarningMessage("Charge Rate", "high")};
     }
-    if (isInRange(chargeRate, 0.8 - chargeRateWarningTolerance, 0.8)) {
-        return {true, generateWarningMessage("Charge Rate", "approaching charge rate limit")};
-    }
-    return {true, ""};
+    return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningTolerance, "Charge Rate");
 }
 
 // Helper function to check and report the battery status
