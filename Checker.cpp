@@ -15,18 +15,30 @@ struct BatteryThresholds {
     float warning_tolerance;
 };
 
-// Generic function to check parameters and generate warnings
-BatteryStatus checkParameter(float value, const BatteryThresholds& thresholds, string low_warning, string high_warning) {
-    float warning_low = thresholds.lower_limit + thresholds.warning_tolerance;
-    float warning_high = thresholds.upper_limit - thresholds.warning_tolerance;
-
+// General parameter check function
+BatteryStatus checkLowLimit(float value, const BatteryThresholds& thresholds, string low_warning) {
     if (value < thresholds.lower_limit) {
         return {false, low_warning + " is low\n"};
-    } else if (value > thresholds.upper_limit) {
+    }
+    return {true, ""};
+}
+
+BatteryStatus checkHighLimit(float value, const BatteryThresholds& thresholds, string high_warning) {
+    if (value > thresholds.upper_limit) {
         return {false, high_warning + " is high\n"};
-    } else if (value <= warning_low) {
+    }
+    return {true, ""};
+}
+
+BatteryStatus checkWarningLow(float value, const BatteryThresholds& thresholds, string low_warning) {
+    if (value <= thresholds.lower_limit + thresholds.warning_tolerance) {
         return {true, "Warning: Approaching " + low_warning + "\n"};
-    } else if (value >= warning_high) {
+    }
+    return {true, ""};
+}
+
+BatteryStatus checkWarningHigh(float value, const BatteryThresholds& thresholds, string high_warning) {
+    if (value >= thresholds.upper_limit - thresholds.warning_tolerance) {
         return {true, "Warning: Approaching " + high_warning + "\n"};
     }
     return {true, ""};
@@ -37,25 +49,51 @@ BatteryThresholds tempThresholds = {0, 45, 2.25};  // 5% of 45 is 2.25
 BatteryThresholds socThresholds = {20, 80, 4};     // 5% of 80 is 4
 BatteryThresholds chargeRateThresholds = {0, 0.8, 0.04};  // 5% of 0.8 is 0.04
 
+// Helper to combine multiple checks
+BatteryStatus combineStatus(BatteryStatus status1, BatteryStatus status2) {
+    if (!status1.All_Ok) return status1;
+    if (!status2.Warning_message.empty()) return status2;
+    return {true, ""};
+}
+
+// Individual parameter checks
 BatteryStatus checkTemperature(float temperature) {
-    return checkParameter(temperature, tempThresholds, "Temperature", "Temperature");
+    auto lowCheck = checkLowLimit(temperature, tempThresholds, "Temperature");
+    auto highCheck = checkHighLimit(temperature, tempThresholds, "Temperature");
+    auto warningLowCheck = checkWarningLow(temperature, tempThresholds, "Temperature");
+    auto warningHighCheck = checkWarningHigh(temperature, tempThresholds, "Temperature");
+    return combineStatus(combineStatus(lowCheck, highCheck), combineStatus(warningLowCheck, warningHighCheck));
 }
 
 BatteryStatus checkSoC(float soc) {
-    return checkParameter(soc, socThresholds, "State of Charge", "State of Charge");
+    auto lowCheck = checkLowLimit(soc, socThresholds, "State of Charge");
+    auto highCheck = checkHighLimit(soc, socThresholds, "State of Charge");
+    auto warningLowCheck = checkWarningLow(soc, socThresholds, "State of Charge");
+    auto warningHighCheck = checkWarningHigh(soc, socThresholds, "State of Charge");
+    return combineStatus(combineStatus(lowCheck, highCheck), combineStatus(warningLowCheck, warningHighCheck));
 }
 
 BatteryStatus checkChargeRate(float chargeRate) {
-    return checkParameter(chargeRate, chargeRateThresholds, "Charge Rate", "Charge Rate");
+    auto highCheck = checkHighLimit(chargeRate, chargeRateThresholds, "Charge Rate");
+    auto warningHighCheck = checkWarningHigh(chargeRate, chargeRateThresholds, "Charge Rate");
+    return combineStatus(highCheck, warningHighCheck);
 }
 
-// Check and report battery status
+// Helper function to check and report battery status
 bool checkAndReport(const BatteryStatus& status) {
     if (!status.All_Ok || !status.Warning_message.empty()) {
         cout << status.Warning_message;
         return status.All_Ok;
     }
     return true;
+}
+
+// Check if battery is OK based on parameters
+bool batteryIsOk(float temperature, float soc, float chargeRate) {
+    bool tempStatus = checkAndReport(checkTemperature(temperature));
+    bool socStatus = checkAndReport(checkSoC(soc));
+    bool chargeRateStatus = checkAndReport(checkChargeRate(chargeRate));
+    return tempStatus && socStatus && chargeRateStatus;
 }
 
 // Test cases
@@ -72,6 +110,3 @@ int main() {
     runTestCases();
     cout << "\nAll the test cases have passed\n";
 }
-
-
-
