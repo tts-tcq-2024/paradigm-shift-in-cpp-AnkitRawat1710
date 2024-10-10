@@ -8,10 +8,10 @@ struct BatteryStatus {
     string Warning_message;
 };
 
-// Tolerance percentages for early warnings
-const float temperatureWarningTolerance = 0.05 * 45;  // 5% of the upper limit (45°C)
-const float socWarningTolerance = 0.05 * 80;          // 5% of the upper limit (80% SoC)
-const float chargeRateWarningTolerance = 0.05 * 0.8;  // 5% of the upper limit (0.8C)
+// Specific warning tolerance values for each parameter
+const float temperatureWarningLower = 0.05 * 45;  // 5% of upper limit (45°C)
+const float socWarningLower = 4;                  // 5% of upper limit (80%) for SoC
+const float chargeRateWarningLower = 0.04;        // 5% of upper limit (0.8C)
 
 // Helper function to generate a warning message
 string generateWarningMessage(const string& parameter, const string& limitType) {
@@ -23,7 +23,7 @@ bool isInRange(float value, float lowerLimit, float upperLimit) {
     return value >= lowerLimit && value <= upperLimit;
 }
 
-// Helper function to check for early warning based on tolerance
+// Helper function to check for early warning based on specific ranges
 BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit, float tolerance, const string& parameter) {
     if (isInRange(value, lowerLimit, lowerLimit + tolerance)) {
         return {true, generateWarningMessage(parameter, "approaching low limit")};
@@ -42,7 +42,7 @@ BatteryStatus checkTemperature(float temperature) {
     if (temperature > 45) {
         return {false, generateWarningMessage("Temperature", "high")};
     }
-    return checkEarlyWarning(temperature, 0, 45, temperatureWarningTolerance, "Temperature");
+    return checkEarlyWarning(temperature, 0, 45, temperatureWarningLower, "Temperature");
 }
 
 // Function to check State of Charge (SoC) and issue warnings
@@ -53,7 +53,7 @@ BatteryStatus checkSoC(float soc) {
     if (soc > 80) {
         return {false, generateWarningMessage("State of Charge", "high")};
     }
-    return checkEarlyWarning(soc, 20, 80, socWarningTolerance, "State of Charge");
+    return checkEarlyWarning(soc, 20, 80, socWarningLower, "State of Charge");
 }
 
 // Function to check charge rate and issue warnings
@@ -61,7 +61,7 @@ BatteryStatus checkChargeRate(float chargeRate) {
     if (chargeRate > 0.8) {
         return {false, generateWarningMessage("Charge Rate", "high")};
     }
-    return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningTolerance, "Charge Rate");
+    return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningLower, "Charge Rate");
 }
 
 // Helper function to check and report the battery status
@@ -91,8 +91,8 @@ void runTestCases() {
     // Temperature edge cases
     assert(batteryIsOk(-20, 70, 0.6) == false);  // Low temperature
     assert(batteryIsOk(100, 70, 0.6) == false);  // High temperature
-    assert(batteryIsOk(2, 70, 0.6) == true);     // Approaching low temperature limit
-    assert(batteryIsOk(43, 70, 0.6) == true);    // Approaching high temperature limit
+    assert(batteryIsOk(1, 70, 0.6) == true);     // Approaching low temperature limit
+    assert(batteryIsOk(44, 70, 0.6) == true);    // Approaching high temperature limit
 
     // SoC edge cases
     assert(batteryIsOk(25, 10, 0.6) == false);  // Low SOC
