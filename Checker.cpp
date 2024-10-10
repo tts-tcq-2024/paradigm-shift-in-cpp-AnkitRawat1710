@@ -2,42 +2,66 @@
 #include <assert.h>
 using namespace std;
 
-// Structure hold the status of battery (checks with an OK flag and a warning message)
+// Structure to hold the status of the battery
 struct BatteryStatus {
     bool All_Ok;
     string Warning_message;
 };
 
-// To Checks if the temperature is within the safe range (0°C to 45°C)
+// Specific warning tolerance values for each parameter
+const float temperatureWarningLower = 0.05 * 45;  // 5% of upper limit (45°C)
+const float socWarningLower = 4;                  // 5% of upper limit (80%) for SoC
+const float chargeRateWarningLower = 0.04;        // 5% of upper limit (0.8C)
+
+// Helper function to generate a warning message
+string generateWarningMessage(const string& parameter, const string& limitType) {
+    return "Warning: " + parameter + " is " + limitType + "\n";
+}
+
+// Helper function to check if a value is in a specific range
+bool isInRange(float value, float lowerLimit, float upperLimit) {
+    return value >= lowerLimit && value <= upperLimit;
+}
+
+// Helper function to check for early warning based on specific ranges
+BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit, float tolerance, const string& parameter) {
+    if (isInRange(value, lowerLimit, lowerLimit + tolerance)) {
+        return {true, generateWarningMessage(parameter, "approaching low limit")};
+    }
+    if (isInRange(value, upperLimit - tolerance, upperLimit)) {
+        return {true, generateWarningMessage(parameter, "approaching high limit")};
+    }
+    return {true, ""};
+}
+
+// Function to check temperature and issue warnings
 BatteryStatus checkTemperature(float temperature) {
     if (temperature < 0) {
-        return {false, "Warning: Temperature is low\n"};
-        
+        return {false, generateWarningMessage("Temperature", "low")};
     }
-    else if (temperature > 45) {
-        return {false, "Warning: Temperature is high\n"};
-        
+    if (temperature > 45) {
+        return {false, generateWarningMessage("Temperature", "high")};
     }
-    return {true, ""};
+    return checkEarlyWarning(temperature, 0, 45, temperatureWarningLower, "Temperature");
 }
 
-// To check if the State of Charge (SOC) is within the safe range (20% to 80%)
+// Function to check State of Charge (SoC) and issue warnings
 BatteryStatus checkSoC(float soc) {
     if (soc < 20) {
-        return {false, "Warning: State of Charge is low\n"};
-    } 
-    else if (soc > 80) {
-        return {false, "Warning: State of Charge is high\n"};
+        return {false, generateWarningMessage("State of Charge", "low")};
     }
-    return {true, ""};
+    if (soc > 80) {
+        return {false, generateWarningMessage("State of Charge", "high")};
+    }
+    return checkEarlyWarning(soc, 20, 80, socWarningLower, "State of Charge");
 }
 
-// To check if the charge rate is within the safe limit (0 to 0.8C)
+// Function to check charge rate and issue warnings
 BatteryStatus checkChargeRate(float chargeRate) {
     if (chargeRate > 0.8) {
-        return {false, "Warning: Charge Rate is high\n"};
+        return {false, generateWarningMessage("Charge Rate", "high")};
     }
-    return {true, ""};
+    return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningLower, "Charge Rate");
 }
 
 // Helper function to check and report the battery status
@@ -46,10 +70,13 @@ bool checkAndReport(const BatteryStatus& status) {
         cout << status.Warning_message;
         return false;
     }
+    if (!status.Warning_message.empty()) {
+        cout << status.Warning_message;
+    }
     return true;
 }
 
-// Checks the battery status for temperature, SOC, and charge rate.
+// Function to check the battery status for temperature, SoC, and charge rate
 bool batteryIsOk(float temperature, float soc, float chargeRate) {
     return checkAndReport(checkTemperature(temperature)) &&
            checkAndReport(checkSoC(soc)) &&
@@ -58,18 +85,27 @@ bool batteryIsOk(float temperature, float soc, float chargeRate) {
 
 // Test cases
 void runTestCases() {
+    // Normal conditions
     assert(batteryIsOk(25, 70, 0.7) == true);
+
+    // Temperature edge cases
     assert(batteryIsOk(-20, 70, 0.6) == false);  // Low temperature
     assert(batteryIsOk(100, 70, 0.6) == false);  // High temperature
+    assert(batteryIsOk(1, 70, 0.6) == true);     // Approaching low temperature limit
+    assert(batteryIsOk(44, 70, 0.6) == true);    // Approaching high temperature limit
+
+    // SoC edge cases
     assert(batteryIsOk(25, 10, 0.6) == false);  // Low SOC
     assert(batteryIsOk(25, 100, 0.6) == false);  // High SOC
-    assert(batteryIsOk(25, 70, 1.1) == false);  // High charge rate
+    assert(batteryIsOk(25, 22, 0.6) == true);    // Approaching discharge limit
+    assert(batteryIsOk(25, 78, 0.6) == true);    // Approaching charge-peak
+
+    // Charge rate edge cases
+    assert(batteryIsOk(25, 70, 1.1) == false);   // High charge rate
+    assert(batteryIsOk(25, 70, 0.76) == true);   // Approaching charge rate limit
 }
 
-// Main function
 int main() {
     runTestCases();
     cout << "\nAll the test cases have passed\n";
 }
-
-
