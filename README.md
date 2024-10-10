@@ -1,60 +1,97 @@
-# paradigm-shift-cplus
-# Programming Paradigms
+### README.md
 
-Electric Vehicles have BMS - Battery Management Systems
+---
 
-[Here is an article that helps to understand the need for BMS](https://circuitdigest.com/article/battery-management-system-bms-for-electric-vehicles)
+# Paradigm Shift: Battery Management System
 
-[Wikipedia gives an idea of the types and topologies](https://en.wikipedia.org/wiki/Battery_management_system)
 
-[This site gives the optimum Charging-temperature limits](https://batteryuniversity.com/learn/article/charging_at_high_and_low_temperatures)
+### Extensions Implemented
 
-[This abstract suggests a range for the optimum State of Charge](https://www.sciencedirect.com/science/article/pii/S2352484719310911)
+1. **Early Warning System**:
+   - Introduced a warning system for temperature, SOC, and charge rate with a 5% tolerance before reaching critical limits.
+   - The system provides early warnings like "Approaching charge-peak" or "Approaching discharge" to alert users before actual alarms are triggered.
 
-[Here is a reference for the maximum charge rate](https://www.electronics-notes.com/articles/electronic_components/battery-technology/li-ion-lithium-ion-charging.php#:~:text=Constant%20current%20charge:%20In%20the%20first%20stage%20of,rate%20of%20a%20maximum%20of%200.8C%20is%20recommended.)
+   #### Example:
+   - **State of Charge (SOC)**:
+     - Safe range: 20% to 80%
+     - Early warning:
+       - **20% to 24%**: "Warning: Approaching discharge"
+       - **76% to 80%**: "Warning: Approaching charge-peak"
 
-## Possible purpose
+2. **Maintainable and Extensible Code**:
+   - Refactored the code to simplify the logic and reduce Cyclomatic Complexity Number(CCN) to less than 3.
+   - Introduced modular, reusable functions for checking parameter limits and warning ranges.
+   - Easy adaptation for future requirements or customer feedback (e.g., disabling warnings for specific parameters).
 
-- Protect batteries while charging:
-at home, in public place, within vehicle / regenerative braking
-- Estimate life, inventory and supply chains
+3. **Generalized Warning System**:
+   - The warning and limit checks are now driven by configuration structures for each parameter (temperature, SOC, charge rate), making it easy to adjust warning thresholds and upper/lower limits as needed.
 
-## The Starting Point
+---
 
-We will explore the charging phase of Li-ion batteries to start with.
+## Purpose
 
-## Issues
+The goal is to safeguard the battery by detecting and alerting users to abnormal conditions during the charging process. The system can be applied across various EV battery applications, including:
+- **Home Charging**
+- **Public Charging Stations**
+- **Vehicle Regenerative Braking**
 
-- The code here has high complexity in a single function.
-- The tests are not complete - they do not cover all the needs of a consumer
+---
 
-## Tasks
+## Key Features
 
-1. Reduce the cyclomatic complexity.
-1. Separate pure functions from I/O
-1. Avoid duplication - functions that do nearly the same thing
-1. Complete the tests - cover all conditions.
-1. To take effective action, we need to know
-the abnormal measure and the breach -
-whether high or low. Add this capability.
+- **Modular Design**: The system is designed to be easily extended for additional parameters or future functionalities.
+- **Early Warning for Action**: Users are notified before critical limits are breached, allowing preventive action.
+- **Configurable Limits**: Each parameter (temperature, SOC, charge rate) has configurable limits and tolerance values to support different use cases or battery specifications.
+  
+---
 
-## The Exploration
+## Approach
 
-How well does our code hold-out in the rapidly evolving EV space?
-Can we add new functionality without disturbing the old?
+1. **Clean Code Principles**:
+   - **Refactoring**: The code is refactored to reduce complexity and ensure that each function has a single responsibility, making the system maintainable and easy to extend.
+   - **Separation of Concerns**: Pure functions handle the checks, while I/O operations (like printing messages) are separated, ensuring testability and clarity.
 
-## The Landscape
+2. **Handling Future Changes**:
+   - The system is designed to adapt to future research and evolving technology. Limits can be adjusted easily without rewriting the entire codebase.
 
-- Limits may change based on new research
-- Technology changes due to obsolescence
-- Sensors may be from different vendors with different accuracy
-- Predicting the future requires Astrology!
+---
 
-## Keep it Simple
+## Code Structure
 
-Shorten the Semantic distance
+- **Threshold Configuration**: Each parameter (temperature, SOC, charge rate) has a structure defining its upper and lower limits along with the early warning tolerance.
+- **Modular Check Functions**: Separate functions handle checks for low, high, and warning conditions, and their results are combined using helper functions to ensure a clean structure.
+- **Test Cases**: A comprehensive set of test cases covers normal, warning, and abnormal conditions for each parameter.
 
-- Procedural to express sequence
-- Functional to express relation between input and output
-- Object oriented to encapsulate state with actions
-- Apect oriented to capture repeating aspects
+---
+
+## Test Coverage
+
+- **Temperature**:
+  - Safe: 25°C
+  - Low: -20°C
+  - High: 100°C
+  - Warnings: Between 0-2.25°C (low) and 42.75-45°C (high)
+  
+- **State of Charge (SOC)**:
+  - Safe: 70%
+  - Low: 10%
+  - High: 100%
+  - Warnings: Between 20-24% (low) and 76-80% (high)
+  
+- **Charge Rate**:
+  - Safe: 0.7C
+  - High: 1.1C
+  - Warnings: Between 0.76-0.8C
+
+---
+
+## Future Improvements
+
+- **Customizable Warnings**: Feedback from customers could enable turning on/off specific warnings (e.g., temperature warnings only).
+- **Sensor Accuracy**: Allow flexibility for integrating sensors from different vendors with varying accuracy levels.
+
+---
+
+## Conclusion
+
+The refactored system ensures a clean, maintainable codebase with a flexible and extensible design. Early warnings provide actionable insights, enhancing the safety of EV batteries before reaching critical conditions.
