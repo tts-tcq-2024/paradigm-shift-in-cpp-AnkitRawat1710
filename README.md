@@ -1,60 +1,64 @@
-# paradigm-shift-cplus
-# Programming Paradigms
+### README.md
 
-Electric Vehicles have BMS - Battery Management Systems
+---
 
-[Here is an article that helps to understand the need for BMS](https://circuitdigest.com/article/battery-management-system-bms-for-electric-vehicles)
+# Paradigm Shift: Battery Management System
 
-[Wikipedia gives an idea of the types and topologies](https://en.wikipedia.org/wiki/Battery_management_system)
 
-[This site gives the optimum Charging-temperature limits](https://batteryuniversity.com/learn/article/charging_at_high_and_low_temperatures)
+## Approach
 
-[This abstract suggests a range for the optimum State of Charge](https://www.sciencedirect.com/science/article/pii/S2352484719310911)
+### 1. **Modularization**
 
-[Here is a reference for the maximum charge rate](https://www.electronics-notes.com/articles/electronic_components/battery-technology/li-ion-lithium-ion-charging.php#:~:text=Constant%20current%20charge:%20In%20the%20first%20stage%20of,rate%20of%20a%20maximum%20of%200.8C%20is%20recommended.)
+- **BatteryStatus.h**: Contains all the constants and the `BatteryStatus` structure, which is used across the application to represent the status of the battery.
+- **BatteryWarning.h**: Contains function declarations for checking battery parameters (temperature, SoC, and charge rate) and helper functions. This header is responsible for exposing the API for checking battery health.
+- **BatteryWarning.cpp**: Implements the functions declared in `BatteryWarning.h`. It handles the actual logic of checking if the battery parameters are within acceptable limits or near warning zones.
+- **main.cpp**: Contains the main logic of the application, including test cases to validate the correctness of the battery-checking functionality.
 
-## Possible purpose
+### 2. **Separation of Concerns**
+Each component of the code has a specific responsibility:
 
-- Protect batteries while charging:
-at home, in public place, within vehicle / regenerative braking
-- Estimate life, inventory and supply chains
+- **BatteryStatus.h**: Focuses on defining the structure for battery status and constants for warning thresholds.
+- **BatteryWarning.cpp/.h**: Handles the detailed logic of checking individual battery parameters (temperature, state of charge, and charge rate) and generating warning messages.
+- **main.cpp**: Isolates the application’s entry point and test cases to validate the functionality without cluttering it with logic from other parts of the system.
 
-## The Starting Point
+This structure makes it easy to maintain and extend functionality in the future. If new parameters or features need to be added, they can be incorporated without altering the core logic of other components.
 
-We will explore the charging phase of Li-ion batteries to start with.
+### 3. **Early Warning Mechanism**
+The core feature of the program is to check battery parameters and provide early warnings when the values approach critical thresholds (5% tolerance). The application also generates critical warnings when values fall outside of acceptable limits, helping monitor battery health and issue alerts before any failures.
 
-## Issues
 
-- The code here has high complexity in a single function.
-- The tests are not complete - they do not cover all the needs of a consumer
+## Challenges
 
-## Tasks
+### 1. **Managing Multiple Files**
+One of the challenges was modularizing the code ensuring that all necessary files are correctly included and that there are no circular dependencies.
 
-1. Reduce the cyclomatic complexity.
-1. Separate pure functions from I/O
-1. Avoid duplication - functions that do nearly the same thing
-1. Complete the tests - cover all conditions.
-1. To take effective action, we need to know
-the abnormal measure and the breach -
-whether high or low. Add this capability.
+### 2. **Maintaining Readability Across Components**
+When splitting code into multiple files, maintaining readability and ensuring that the code remains easy to follow is essential. In this case, the files are divided logically, so each component of the code is clearly responsible for a specific function.
 
-## The Exploration
+### 3. **Testing Across Multiple Files**
+With the logic spread across different files, debugging and testing can become more challenging. To mitigate this, test cases were centralized in `main.cpp` to ensure the behavior of the program is validated after the refactor. 
 
-How well does our code hold-out in the rapidly evolving EV space?
-Can we add new functionality without disturbing the old?
+### 4. **Consistency of Warning System**
+Another challenge was ensuring the consistency of the warning system. So i have ensure that warnings for temperature, SoC, and charge rate adhered to the same pattern for generating messages, so the user experience is uniform across all parameters.
 
-## The Landscape
+Testing the boundaries of each parameter—temperature, SoC, and charge rate—was crucial. Handling these edge cases (e.g., temperature right at the upper or lower limits) had to be implemented carefully to prevent errors or incorrect warnings. The test cases in `main.cpp` ensure these edge cases are covered.
 
-- Limits may change based on new research
-- Technology changes due to obsolescence
-- Sensors may be from different vendors with different accuracy
-- Predicting the future requires Astrology!
 
-## Keep it Simple
+## Test Coverage
 
-Shorten the Semantic distance
-
-- Procedural to express sequence
-- Functional to express relation between input and output
-- Object oriented to encapsulate state with actions
-- Apect oriented to capture repeating aspects
+- **Temperature**:
+  - Safe: 25°C
+  - Low: -20°C
+  - High: 100°C
+  - Warnings: Between 0-2.25°C (low) and 42.75-45°C (high)
+  
+- **State of Charge (SOC)**:
+  - Safe: 70%
+  - Low: 10%
+  - High: 100%
+  - Warnings: Between 20-24% (low) and 76-80% (high)
+  
+- **Charge Rate**:
+  - Safe: 0.7C
+  - High: 1.1C
+  - Warnings: Between 0.76-0.8C
