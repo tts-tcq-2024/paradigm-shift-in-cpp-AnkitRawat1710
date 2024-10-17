@@ -8,7 +8,6 @@
 ## Approach
 
 ### 1. **Modularization**
-The primary goal of this refactor was to organize the code into distinct, logical components by separating the implementation into multiple files. This modular approach enhances maintainability, readability, and scalability.
 
 - **BatteryStatus.h**: Contains all the constants and the `BatteryStatus` structure, which is used across the application to represent the status of the battery.
 - **BatteryWarning.h**: Contains function declarations for checking battery parameters (temperature, SoC, and charge rate) and helper functions. This header is responsible for exposing the API for checking battery health.
@@ -31,16 +30,16 @@ The core feature of the program is to check battery parameters and provide early
 ## Challenges
 
 ### 1. **Managing Multiple Files**
-One of the challenges with modularizing the code is ensuring that all necessary files are correctly included and that there are no circular dependencies. Care was taken to ensure that the headers are only included where required, and the `#include` guards (or `#pragma once`) prevent multiple inclusions.
+One of the challenges was modularizing the code ensuring that all necessary files are correctly included and that there are no circular dependencies.
 
 ### 2. **Maintaining Readability Across Components**
-When splitting code into multiple files, maintaining readability and ensuring that the code remains easy to follow is essential. Too many file splits could lead to fragmentation, where it becomes difficult to trace the flow of the program. In this case, the files are divided logically, so each component of the code is clearly responsible for a specific function.
+When splitting code into multiple files, maintaining readability and ensuring that the code remains easy to follow is essential. In this case, the files are divided logically, so each component of the code is clearly responsible for a specific function.
 
 ### 3. **Testing Across Multiple Files**
-With the logic spread across different files, debugging and testing can become more challenging. To mitigate this, test cases were centralized in `main.cpp` to ensure the behavior of the program is validated after the refactor. Additionally, special care was taken to ensure that each function in `BatteryWarning.cpp` operates correctly when integrated with the other components.
+With the logic spread across different files, debugging and testing can become more challenging. To mitigate this, test cases were centralized in `main.cpp` to ensure the behavior of the program is validated after the refactor. 
 
 ### 4. **Consistency of Warning System**
-Another challenge was ensuring the consistency of the warning system. We had to ensure that warnings for temperature, SoC, and charge rate adhered to the same pattern for generating messages, so the user experience is uniform across all parameters.
+Another challenge was ensuring the consistency of the warning system. So i have ensure that warnings for temperature, SoC, and charge rate adhered to the same pattern for generating messages, so the user experience is uniform across all parameters.
 
 Testing the boundaries of each parameter—temperature, SoC, and charge rate—was crucial. Handling these edge cases (e.g., temperature right at the upper or lower limits) had to be implemented carefully to prevent errors or incorrect warnings. The test cases in `main.cpp` ensure these edge cases are covered.
 
