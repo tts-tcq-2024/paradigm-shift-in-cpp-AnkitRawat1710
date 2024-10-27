@@ -4,7 +4,7 @@
 #include <string>
 
 // Structure to hold the status of the battery
-struct BatteryStatus {
+struct batteryStatus {
     bool All_Ok;
     std::string Warning_message;
 };
