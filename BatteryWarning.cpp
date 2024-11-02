@@ -21,29 +21,54 @@ BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit,
     return {true, ""};
 }
 
-BatteryStatus checkTemperature(float temperature) {
+// Separate functions to handle specific checks
+BatteryStatus checkTemperatureBounds(float temperature) {
     if (temperature < 0) {
         return {false, generateWarningMessage("Temperature", "low")};
     }
     if (temperature > 45) {
         return {false, generateWarningMessage("Temperature", "high")};
     }
-    return checkEarlyWarning(temperature, 0, 45, temperatureWarningLower, "Temperature");
+    return {true, ""}; // No error
 }
 
-BatteryStatus checkSoC(float soc) {
+BatteryStatus checkSoCBounds(float soc) {
     if (soc < 20) {
         return {false, generateWarningMessage("State of Charge", "low")};
     }
     if (soc > 80) {
         return {false, generateWarningMessage("State of Charge", "high")};
     }
+    return {true, ""}; // No error
+}
+
+BatteryStatus checkChargeRateBounds(float chargeRate) {
+    if (chargeRate > 0.8) {
+        return {false, generateWarningMessage("Charge Rate", "high")};
+    }
+    return {true, ""}; // No error
+}
+
+BatteryStatus checkTemperature(float temperature) {
+    BatteryStatus boundsStatus = checkTemperatureBounds(temperature);
+    if (!boundsStatus.All_Ok) {
+        return boundsStatus;
+    }
+    return checkEarlyWarning(temperature, 0, 45, temperatureWarningLower, "Temperature");
+}
+
+BatteryStatus checkSoC(float soc) {
+    BatteryStatus boundsStatus = checkSoCBounds(soc);
+    if (!boundsStatus.All_Ok) {
+        return boundsStatus;
+    }
     return checkEarlyWarning(soc, 20, 80, socWarningLower, "State of Charge");
 }
 
 BatteryStatus checkChargeRate(float chargeRate) {
-    if (chargeRate > 0.8) {
-        return {false, generateWarningMessage("Charge Rate", "high")};
+    BatteryStatus boundsStatus = checkChargeRateBounds(chargeRate);
+    if (!boundsStatus.All_Ok) {
+        return boundsStatus;
     }
     return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningLower, "Charge Rate");
 }
