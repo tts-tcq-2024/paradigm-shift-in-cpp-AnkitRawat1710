@@ -4,6 +4,12 @@
 #include <string>
 #include "BatteryStatus.h"
 
+// Define the BatteryStatus structure
+struct BatteryStatus {
+    bool All_Ok;               // Flag to indicate if the battery status is okay
+    std::string Warning_message; // Warning message if any conditions are not met
+};
+
 // Helper function to generate a warning message
 std::string generateWarningMessage(const std::string& parameter, const std::string& limitType);
 
