@@ -3,14 +3,17 @@
 
 using namespace std;
 
+// Generate a warning message based on the parameter and limit type
 std::string generateWarningMessage(const std::string& parameter, const std::string& limitType) {
     return "Warning: " + parameter + " is " + limitType + "\n";
 }
 
+// Check if a value is within the specified range
 bool isInRange(float value, float lowerLimit, float upperLimit) {
     return value >= lowerLimit && value <= upperLimit;
 }
 
+// Check for early warnings based on value, limits, and tolerance
 BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit, float tolerance, const std::string& parameter) {
     if (isInRange(value, lowerLimit, lowerLimit + tolerance)) {
         return {true, generateWarningMessage(parameter, "approaching low limit")};
@@ -21,7 +24,7 @@ BatteryStatus checkEarlyWarning(float value, float lowerLimit, float upperLimit,
     return {true, ""};
 }
 
-// Separate functions to handle specific checks
+
 BatteryStatus checkTemperatureBounds(float temperature) {
     if (temperature < 0) {
         return {false, generateWarningMessage("Temperature", "low")};
@@ -31,6 +34,7 @@ BatteryStatus checkTemperatureBounds(float temperature) {
     }
     return {true, ""}; // No error
 }
+
 
 BatteryStatus checkSoCBounds(float soc) {
     if (soc < 20) {
@@ -42,6 +46,7 @@ BatteryStatus checkSoCBounds(float soc) {
     return {true, ""}; // No error
 }
 
+
 BatteryStatus checkChargeRateBounds(float chargeRate) {
     if (chargeRate > 0.8) {
         return {false, generateWarningMessage("Charge Rate", "high")};
@@ -49,6 +54,7 @@ BatteryStatus checkChargeRateBounds(float chargeRate) {
     return {true, ""}; // No error
 }
 
+// Check temperature and issue warnings or status
 BatteryStatus checkTemperature(float temperature) {
     BatteryStatus boundsStatus = checkTemperatureBounds(temperature);
     if (!boundsStatus.All_Ok) {
@@ -57,6 +63,7 @@ BatteryStatus checkTemperature(float temperature) {
     return checkEarlyWarning(temperature, 0, 45, temperatureWarningLower, "Temperature");
 }
 
+// Check State of Charge (SoC) and issue warnings or status
 BatteryStatus checkSoC(float soc) {
     BatteryStatus boundsStatus = checkSoCBounds(soc);
     if (!boundsStatus.All_Ok) {
@@ -65,6 +72,7 @@ BatteryStatus checkSoC(float soc) {
     return checkEarlyWarning(soc, 20, 80, socWarningLower, "State of Charge");
 }
 
+// Check charge rate and issue warnings or status
 BatteryStatus checkChargeRate(float chargeRate) {
     BatteryStatus boundsStatus = checkChargeRateBounds(chargeRate);
     if (!boundsStatus.All_Ok) {
@@ -73,6 +81,7 @@ BatteryStatus checkChargeRate(float chargeRate) {
     return checkEarlyWarning(chargeRate, 0, 0.8, chargeRateWarningLower, "Charge Rate");
 }
 
+// Check the battery status and report any issues or warnings
 bool checkAndReport(const BatteryStatus& status) {
     if (!status.All_Ok) {
         cout << status.Warning_message;
@@ -84,6 +93,7 @@ bool checkAndReport(const BatteryStatus& status) {
     return true;
 }
 
+// Main function to check battery status for temperature, SoC, and charge rate
 bool batteryIsOk(float temperature, float soc, float chargeRate) {
     return checkAndReport(checkTemperature(temperature)) &&
            checkAndReport(checkSoC(soc)) &&
